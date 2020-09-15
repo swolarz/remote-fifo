@@ -45,6 +45,7 @@ public class Manager {
 
         try {
             setupManager(port);
+            System.out.printf("Fifo registry manager started at port %d...%n", port);
         }
         catch (RemoteException e) {
             System.out.printf("Error: failed to setup fifo registry: %s%n", e.getMessage());

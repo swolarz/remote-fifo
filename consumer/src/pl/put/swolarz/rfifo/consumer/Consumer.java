@@ -62,7 +62,6 @@ public class Consumer {
         }
         catch (RemoteException | NotBoundException e) {
             System.err.printf("Error: Failed to connect to fifo registry: %s%n", e.getMessage());
-            e.printStackTrace();
             System.exit(2);
         }
 
@@ -74,6 +73,8 @@ public class Consumer {
 
         try {
             FifoReader fifoReader = (FifoReader) UnicastRemoteObject.exportObject(reader, 0);
+            reader.setupRemoteConnection(fifoReader);
+
             FifoWriter writer = fifoRegistry.connectFifoReader(fifoPath, fifoReader);
 
             if (writer != null)

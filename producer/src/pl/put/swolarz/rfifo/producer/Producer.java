@@ -62,7 +62,6 @@ public class Producer {
         }
         catch (RemoteException | NotBoundException e) {
             System.err.printf("Error: Failed to connect to fifo registry: %s%n", e.getMessage());
-            e.printStackTrace();
             System.exit(2);
         }
 

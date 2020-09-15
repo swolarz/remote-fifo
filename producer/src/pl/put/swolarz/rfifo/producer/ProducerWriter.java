@@ -22,7 +22,7 @@ class ProducerWriter implements FifoWriter {
 
     public ProducerWriter(InputStream input) {
         this.input = input;
-        this.writing = false;
+        this.writing = true;
     }
 
     @Override
@@ -30,7 +30,7 @@ class ProducerWriter implements FifoWriter {
         if (selfStub == null)
             throw new RuntimeException("Self stub not initialized");
 
-        if (writing)
+        if (this.consumer != null)
             return;
 
         this.consumer = reader;
@@ -44,6 +44,7 @@ class ProducerWriter implements FifoWriter {
                 do {
                     bytes = input.readNBytes(BUFFER_SIZE);
                     consumer.accept(bytes, selfStub);
+                    // System.err.printf("Debug: sent %d bytes%n", bytes.length);
 
                 } while (bytes.length > 0);
             }
@@ -65,7 +66,10 @@ class ProducerWriter implements FifoWriter {
     }
 
     private void finalizeFifoWrite() {
+        // System.err.println("Debug: closing writer");
+
         this.writing = false;
+        System.exit(0);
     }
 
     @Override

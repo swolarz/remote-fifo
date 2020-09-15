@@ -20,6 +20,7 @@ class FifoConnectionsRegistry implements FifoRegistry {
 
     @Override
     public FifoWriter connectFifoReader(String path, FifoReader reader) throws FifoSideAlreadyBoundException {
+        System.out.printf("Received reader connection to fifo: %s%n", path);
         validateFifoPath(path);
 
         if (reader == null)
@@ -41,6 +42,7 @@ class FifoConnectionsRegistry implements FifoRegistry {
 
     @Override
     public FifoReader connectFifoWriter(String path, FifoWriter writer) throws FifoSideAlreadyBoundException {
+        System.out.printf("Received writer connection to fifo: %s%n", path);
         validateFifoPath(path);
 
         if (writer == null)
@@ -66,12 +68,34 @@ class FifoConnectionsRegistry implements FifoRegistry {
 
         FifoConnection connection = fifoConnections.get(fifoPath);
 
-        if (connection.isConnected() && !(heartbeatClient(connection.getReader()) && heartbeatClient(connection.getWriter()))) {
+        if (connection.isConnected()
+                && !(heartbeatReader(fifoPath, connection.getReader()) && heartbeatWriter(fifoPath, connection.getWriter()))) {
+
+            System.err.printf("Resetting fifo connection: %s%n", fifoPath);
+
             connection = new FifoConnection();
             fifoConnections.put(fifoPath, connection);
         }
 
         return connection;
+    }
+
+    private boolean heartbeatReader(String fifoPath, FifoReader reader) {
+        System.out.printf("Sending heartbeat to reader at: '%s'... ", fifoPath);
+        boolean pong = heartbeatClient(reader);
+
+        System.out.println(pong ? "Ok." : "Not responding.");
+
+        return pong;
+    }
+
+    private boolean heartbeatWriter(String fifoPath, FifoWriter writer) {
+        System.out.printf("Sending heartbeat to writer at: '%s'... ", fifoPath);
+        boolean pong = heartbeatClient(writer);
+
+        System.out.println(pong ? "Ok." : "Not responding.");
+
+        return pong;
     }
 
     private boolean heartbeatClient(FifoClient client) {

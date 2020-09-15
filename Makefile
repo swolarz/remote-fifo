@@ -2,43 +2,42 @@
 REGISTRY_HOST ?= localhost
 REGISTRY_PORT ?= 1099
 
-.PHONY: compile manager write read clean
+
+PROTOCOL_SOURCES := $(shell find protocol/src -type f -name "*.java")
+PRODUCER_SOURCES := $(shell find producer/src -type f -name "*.java")
+CONSUMER_SOURCES := $(shell find consumer/src -type f -name "*.java")
+MANAGER_SOURCES := $(shell find manager/src -type f -name "*.java")
+
+
+.PHONY: all compile manager write read clean compile-consumer compile-producer compile-manager compile-protocol
 
 all: compile
 
-compile:
+compile-protocol: $(PROTOCOL_SOURCES)
 	@mkdir -p target/protocol
-	javac -d target/protocol \
-		protocol/src/pl/put/swolarz/rfifo/protocol/FifoRegistry.java \
-		protocol/src/pl/put/swolarz/rfifo/protocol/FifoClient.java \
-		protocol/src/pl/put/swolarz/rfifo/protocol/FifoReader.java \
-		protocol/src/pl/put/swolarz/rfifo/protocol/FifoWriter.java \
-		protocol/src/pl/put/swolarz/rfifo/protocol/ConsumerFailureException.java \
-		protocol/src/pl/put/swolarz/rfifo/protocol/FifoSideAlreadyBoundException.java
+	javac -d target/protocol $(PROTOCOL_SOURCES)
 	jar cvf target/protocol.jar -C target/protocol .
+
+compile-producer: compile-protocol $(PRODUCER_SOURCES)
 	@mkdir -p target/producer
-	javac -cp ./lib/*:./target/protocol \
-		-d target/producer \
-		producer/src/pl/put/swolarz/rfifo/producer/Producer.java \
-		producer/src/pl/put/swolarz/rfifo/producer/ProducerWriter.java
-	jar cvfm target/producer.jar producer/Manifest.txt -C target/producer . -C target protocol.jar
+	javac -cp ./lib/*:./target/protocol -d target/producer $(PRODUCER_SOURCES)
+	jar cvfm target/producer.jar producer/Manifest.txt -C target/producer .
+
+compile-consumer: compile-protocol $(CONSUMER_SOURCES)
 	@mkdir -p target/consumer
-	javac -cp ./lib/*:./target/protocol \
-		-d target/consumer \
-		consumer/src/pl/put/swolarz/rfifo/consumer/Consumer.java \
-		consumer/src/pl/put/swolarz/rfifo/consumer/ConsumerReader.java
-	jar cvfm target/consumer.jar consumer/Manifest.txt -C target/consumer . -C target protocol.jar
+	javac -cp ./lib/*:./target/protocol -d target/consumer $(CONSUMER_SOURCES)
+	jar cvfm target/consumer.jar consumer/Manifest.txt -C target/consumer .
+
+compile-manager: compile-protocol $(MANAGER_SOURCES)
 	@mkdir -p target/manager
-	javac -cp ./lib/*:./target/protocol \
-		-d target/manager \
-		manager/src/pl/put/swolarz/rfifo/manager/Manager.java \
-		manager/src/pl/put/swolarz/rfifo/manager/FifoConnectionsRegistry.java
-	jar cvfm target/manager.jar manager/Manifest.txt \
-		-C target/manager .
+	javac -cp ./lib/*:./target/protocol -d target/manager $(MANAGER_SOURCES)
+	jar cvfm target/manager.jar manager/Manifest.txt -C target/manager .
+
+compile: compile-protocol compile-producer compile-consumer compile-manager
 	@cp lib/* target/
 
 manager:
-	@cd target && java -jar manager.jar --port=$(REGISTRY_PORT)
+	@java -jar target/manager.jar --port=$(REGISTRY_PORT)
 
 write:
 ifndef FIFO_NAME

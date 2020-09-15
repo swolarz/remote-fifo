@@ -13,6 +13,8 @@ import java.util.concurrent.TimeUnit;
 class ConsumerReader implements FifoReader {
 
     private FifoWriter producer;
+    private FifoReader selfStub;
+
     private boolean awaiting;
     private final ScheduledThreadPoolExecutor heartbeatExecutor;
 
@@ -29,8 +31,10 @@ class ConsumerReader implements FifoReader {
 
         acknowledgeProducer(from);
 
-        if (bytes == null)
-            close();
+        if (bytes == null) {
+            CompletableFuture.runAsync(this::close);
+            return;
+        }
 
         try {
             consumeBytes(bytes);
@@ -46,7 +50,19 @@ class ConsumerReader implements FifoReader {
             return;
 
         this.producer = producer;
+
         heartbeatExecutor.scheduleWithFixedDelay(this::sendHeartbeat, 1, 5, TimeUnit.SECONDS);
+        CompletableFuture.runAsync(this::notifyProducer);
+    }
+
+    private void notifyProducer() {
+        try {
+            producer.notifyReady(selfStub);
+        }
+        catch (RemoteException e) {
+            System.err.printf("Error: failed to reach producer due to connection error: %s%n", e.getMessage());
+            shutdown();
+        }
     }
 
     private void sendHeartbeat() {
@@ -85,5 +101,9 @@ class ConsumerReader implements FifoReader {
     @Override
     public boolean ping() {
         return awaiting;
+    }
+
+    public void setupRemoteConnection(FifoReader selfStub) {
+        this.selfStub = selfStub;
     }
 }
