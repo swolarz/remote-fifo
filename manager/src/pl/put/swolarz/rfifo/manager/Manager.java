@@ -14,7 +14,7 @@ public class Manager {
     private static Registry registry;
 
 
-    public static void main(String[] args) throws RemoteException {
+    public static void main(String[] args) {
         Options options = new Options();
 
         Option portOption = new Option("p", "port", true, "RMI registry port");
@@ -34,16 +34,22 @@ public class Manager {
             System.out.println(e.getMessage());
             formatter.printHelp("utility-name", options);
 
-            System.exit(1);
+            System.exit(2);
         }
 
         int port = Integer.parseInt(cmd.getOptionValue(portOption.getOpt(), "1099"));
         if (port > 65535) {
             System.out.printf("Error: invalid port value = %d%n", port);
-            System.exit(1);
+            System.exit(2);
         }
 
-        setupManager(port);
+        try {
+            setupManager(port);
+        }
+        catch (RemoteException e) {
+            System.out.printf("Error: failed to setup fifo registry: %s%n", e.getMessage());
+            System.exit(1);
+        }
     }
 
     private static void setupManager(int port) throws RemoteException {
