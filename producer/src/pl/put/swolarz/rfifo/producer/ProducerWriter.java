@@ -38,6 +38,7 @@ class ProducerWriter implements FifoWriter {
     }
 
     private synchronized void writeToFifo() {
+        long totalBytes = 0;
         try {
             try {
                 while (true) {
@@ -53,7 +54,9 @@ class ProducerWriter implements FifoWriter {
                     }
 
                     consumer.accept(bytes, selfStub);
-                    System.err.printf("Sent %d bytes...%n", bytes.length);
+
+                    totalBytes += bytes.length;
+                    System.err.printf("Sent %d bytes (total %d)...%n", bytes.length, totalBytes);
                 }
             }
             catch (ConsumerFailureException e) {
