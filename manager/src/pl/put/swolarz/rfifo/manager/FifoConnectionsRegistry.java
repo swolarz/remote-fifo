@@ -32,7 +32,7 @@ class FifoConnectionsRegistry implements FifoRegistry {
     private synchronized FifoWriter connectReader(String path, FifoReader reader) throws FifoSideAlreadyBoundException {
         FifoConnection fifo = getOrCreateConnection(path);
 
-        if (fifo.getReader() != null)
+        if (fifo.getReader() != null && heartbeatReader(path, fifo.getReader()))
             throw new FifoSideAlreadyBoundException(FifoSide.READER);
 
         fifo.connectReader(reader);
@@ -54,7 +54,7 @@ class FifoConnectionsRegistry implements FifoRegistry {
     private synchronized FifoReader connectWriter(String path, FifoWriter writer) throws FifoSideAlreadyBoundException {
         FifoConnection fifo = getOrCreateConnection(path);
 
-        if (fifo.getWriter() != null)
+        if (fifo.getWriter() != null && heartbeatWriter(path, fifo.getWriter()))
             throw new FifoSideAlreadyBoundException(FifoSide.WRITER);
 
         fifo.connectWriter(writer);

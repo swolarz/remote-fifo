@@ -56,7 +56,7 @@ class ProducerWriter implements FifoWriter {
                     consumer.accept(bytes, selfStub);
 
                     totalBytes += bytes.length;
-                    System.err.printf("Sent %d bytes (total %d)...%n", bytes.length, totalBytes);
+                    System.err.printf("Sent %d bytes (total %d)%n", bytes.length, totalBytes);
                 }
             }
             catch (ConsumerFailureException e) {
