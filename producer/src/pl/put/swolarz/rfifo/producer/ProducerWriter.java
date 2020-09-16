@@ -40,16 +40,21 @@ class ProducerWriter implements FifoWriter {
     private synchronized void writeToFifo() {
         try {
             try {
-                byte[] bytes;
-                do {
-                    bytes = input.readNBytes(BUFFER_SIZE);
-                    consumer.accept(bytes, selfStub);
-                    // System.err.printf("Debug: sent %d bytes%n", bytes.length);
+                while (true) {
+                    byte[] bytes;
+                    try {
+                        bytes = input.readNBytes(BUFFER_SIZE);
+                        if (bytes.length == 0)
+                            break;
+                    }
+                    catch (IOException e) {
+                        System.err.printf("Error: failed to read input stream: %s%n", e.getMessage());
+                        break;
+                    }
 
-                } while (bytes.length > 0);
-            }
-            catch (IOException e) {
-                System.err.printf("Error: failed to read input stream: %s%n", e.getMessage());
+                    consumer.accept(bytes, selfStub);
+                    System.err.printf("Sent %d bytes...%n", bytes.length);
+                }
             }
             catch (ConsumerFailureException e) {
                 System.err.printf("Warning: reader side failure: %s%n", e.getMessage());
@@ -66,8 +71,6 @@ class ProducerWriter implements FifoWriter {
     }
 
     private void finalizeFifoWrite() {
-        // System.err.println("Debug: closing writer");
-
         this.writing = false;
         System.exit(0);
     }
