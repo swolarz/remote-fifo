@@ -1,6 +1,7 @@
 
 REGISTRY_HOST ?= localhost
 REGISTRY_PORT ?= 1099
+EXPORT_HOSTNAME ?= 127.0.1.1
 
 
 PROTOCOL_SOURCES := $(shell find protocol/src -type f -name "*.java")
@@ -37,20 +38,22 @@ compile: compile-protocol compile-producer compile-consumer compile-manager
 	@cp lib/* target/
 
 manager:
-	@java -jar target/manager.jar --port=$(REGISTRY_PORT)
+	@java -Djava.rmi.server.hostname=$(EXPORT_HOSTNAME) -jar target/manager.jar --port=$(REGISTRY_PORT)
 
 write:
 ifndef FIFO_NAME
 	@echo FIFO_NAME variable not passed
 else
-	@java -jar target/producer.jar --fifo=$(FIFO_NAME) --host=$(REGISTRY_HOST) --port=$(REGISTRY_PORT)
+	@java -Djava.rmi.server.hostname=$(EXPORT_HOSTNAME) \
+		-jar target/producer.jar --fifo=$(FIFO_NAME) --host=$(REGISTRY_HOST) --port=$(REGISTRY_PORT)
 endif
 
 read:
 ifndef FIFO_NAME
 	@echo FIFO_NAME variable not passed
 else
-	@java -jar target/consumer.jar --fifo=$(FIFO_NAME) --host=$(REGISTRY_HOST) --port=$(REGISTRY_PORT)
+	@java -Djava.rmi.server.hostname=$(EXPORT_HOSTNAME) \
+		-jar target/consumer.jar --fifo=$(FIFO_NAME) --host=$(REGISTRY_HOST) --port=$(REGISTRY_PORT)
 endif
 
 clean:
